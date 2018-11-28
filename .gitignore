@@ -1,0 +1,4 @@
+.idea/
+sudoku.csv
+*.npy
+logs/
