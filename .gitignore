@@ -2,3 +2,4 @@
 sudoku.csv
 *.npy
 logs/
+*.h5
