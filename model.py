@@ -13,7 +13,7 @@ from datetime import datetime
 
 
 # full path to repo
-BASE_PATH = "/Users/user/Desktop/Github/sudoku-solver/"
+BASE_PATH = "/home/user/keras/sudoku-solver"
 
 
 # TODO:
@@ -35,21 +35,25 @@ def puzzle_loss(y_true, y_pred):
 def build_model(x_train, y_train):
 
     model = Sequential()
-    model.add(Dense(300, activation="sigmoid", input_dim=81))
-    model.add(Dense(300, activation="relu"))
+    model.add(Dense(500, activation="sigmoid", input_dim=81))
+    model.add(Dense(500, activation="relu"))
+    model.add(Dense(500, activation="tanh"))
+    model.add(Dense(500, activation="sigmoid"))
     model.add(Dense(81))
 
     model.compile(loss="mae", optimizer="adam")
 
     callbacks = [keras.callbacks.TensorBoard(
                                 log_dir="./logs/"+datetime.now().strftime('%Y-%m-%d_%H:%M:%S')),
-                 keras.callbacks.EarlyStopping(monitor="loss", patience=5)
+                 #keras.callbacks.EarlyStopping(monitor="loss", patience=10),
+                 keras.callbacks.ModelCheckpoint("model_"+ datetime.now().strftime('%Y-%m-%d_%H:%M:%S') + ".h5", monitor='val_loss', save_best_only=True)
                  ]
 
     model.fit(x_train,
               y_train,
-              epochs=1000,
-              batch_size=32,
+              epochs=9000,
+              batch_size=750,
+              validation_split=0.1,
               callbacks=callbacks)
 
     return model
@@ -67,7 +71,7 @@ x_test = x[:100000]
 y_test = y[:100000]
 
 model = build_model(x_train, y_train)
-
+model.save("model_"+ datetime.now().strftime('%Y-%m-%d_%H:%M:%S') + ".h5")
 preds = model.predict(x_test)
 
 correct = 0
