@@ -10,12 +10,13 @@ from keras.layers import Dense
 from keras.utils import to_categorical
 import keras.backend as K
 import keras
+import tensorflow as tf
 from datetime import datetime
 import numpy as np
 
 
 # full path to repo
-BASE_PATH = "/Users/user/Desktop/Github/sudoku-solver"
+BASE_PATH = "/home/michael_samon/sudoku-solver"
 
 
 # TODO:
@@ -42,28 +43,29 @@ def build_model(x_train, y_train, op):
     model = Sequential()
     model.add(Dense(4000, activation="relu", input_dim=810))
     model.add(Dense(4000, activation="relu"))
-    model.add(Dense(4000, activation="tanh"))
-    model.add(Dense(4000, activation="tanh"))
+    model.add(Dense(4000, activation="relu"))
+    model.add(Dense(4000, activation="relu"))
     #model.add(Dense(3000, activation="tanh"))
    # model.add(Dense(3000, activation="tanh"))
     model.add(Dense(810, activation="sigmoid"))
 
     model.compile(loss="categorical_crossentropy", optimizer=op)
 
-    callbacks = [keras.callbacks.TensorBoard(
-                                log_dir="./logs/"+datetime.now().strftime('%Y-%m-%d_%H:%M:%S')),
+    callbacks = [#keras.callbacks.TensorBoard(
+                  #              log_dir="./logs/"+datetime.now().strftime('%Y-%m-%d_%H:%M:%S')),
                  keras.callbacks.ReduceLROnPlateau(monitor="loss"),
                  # keras.callbacks.EarlyStopping(monitor="loss", patience=10),
                  keras.callbacks.ModelCheckpoint("model_" + datetime.now().strftime('%Y-%m-%d_%H:%M:%S') + ".h5",
                                                  monitor='val_loss', save_best_only=True)
                  ]
 
-    model.fit(x_train,
-              y_train,
-              epochs=20,
-              batch_size=50,
-              validation_split=0.1,
-              callbacks=callbacks)
+    with tf.device('/gpu:0'):
+        model.fit(x_train,
+                y_train,
+                epochs=20,
+                batch_size=50,
+                validation_split=0.1,
+                callbacks=callbacks)
 
     return model
 
@@ -85,11 +87,11 @@ model.save("model-v2_" + datetime.now().strftime('%Y-%m-%d_%H:%M:%S') + ".h5")
 #model = keras.models.load_model("model_2018-11-29_04_01_38.h5")
 preds = model.predict(x_test[:3]).reshape((3, 81, 10))
 
-# preds = np.argmax(preds, axis=2).reshape((100000, 81, 10))
-# correct = 0
-# for i, pred in enumerate(preds):
-#     compared = (pred == y_test[i])
-#     if False not in compared:
-#         correct += 1
-#
-# print("\nModel correctly solved {}/100000 puzzles".format(correct))
+preds = np.argmax(preds, axis=2).reshape((100000, 81, 10))
+correct = 0
+for i, pred in enumerate(preds):
+    compared = (pred == y_test[i])
+    if False not in compared:
+        correct += 1
+
+print("\nModel correctly solved {}/100000 puzzles".format(correct))
